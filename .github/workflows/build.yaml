@@ -22,7 +22,7 @@ jobs:
           glib2-devel gnutls-devel libjpeg-turbo-devel libpng-devel \
           libslirp-devel libssh-devel libusbx-devel lzo-devel ncurses-devel \
           pixman-devel snappy-devel zstd libzstd-devel gmp-devel \
-          gtk3-devel SDL2-devel lzfse-devel python3-pip
+          gtk3-devel SDL2-devel lzfse-devel python3-pip wget automake autoconf
           pip3 install --user --upgrade meson
       - uses: actions/checkout@v7
         with:
