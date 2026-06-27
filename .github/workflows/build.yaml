@@ -1,4 +1,5 @@
 name: build
+
 on:
   push:
     branches:
@@ -16,11 +17,13 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
+
       - name: Install dependencies
         run: |
           sudo apt-get update -y
           sudo apt-get install -y build-essential libtool ninja-build pkg-config device-tree-compiler libglib2.0-dev gnutls-bin libjpeg-turbo8-dev libpng-dev libslirp-dev libssh-dev libusb-1.0-0-dev liblzo2-dev libncurses5-dev libpixman-1-dev libsnappy-dev vde2 zstd libgnutls28-dev libgmp10 libgmp3-dev lzfse liblzfse-dev python3-pip
           pip3 install --user --upgrade meson
+
       - name: Build nettle 3.10.2
         run: |
           wget https://ftpmirror.gnu.org/gnu/nettle/nettle-3.10.2.tar.gz
@@ -30,16 +33,32 @@ jobs:
           ./configure
           make -j$(nproc)
           sudo make install
+
       - name: Build
         run: |
-          mkdir build
-          cd build
+          mkdir build && cd build
           export PATH="$HOME/.local/bin:$PATH"
-          PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig ../configure --target-list=aarch64-softmmu,x86_64-softmmu --disable-guest-agent --enable-slirp --enable-lzfse --enable-nettle --enable-gnutls --disable-werror
+          PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig ../configure \
+            --target-list=aarch64-softmmu,x86_64-softmmu \
+            --disable-guest-agent \
+            --enable-slirp \
+            --enable-lzfse \
+            --enable-nettle \
+            --enable-gnutls \
+            --disable-werror
           make -j$(nproc)
 
+      - name: Upload Linux Artifact (v7)
+        uses: actions/upload-artifact@v7
+        with:
+          name: qemu-v7-linux
+          path: |
+            build/qemu-system-aarch64
+            build/qemu-system-x86_64
+          retention-days: 30
+
   build_macos:
-    name: macOS Build
+    name: macOS Build (ARM)
     runs-on: macos-26
     permissions:
       contents: read
@@ -48,14 +67,42 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
+
       - name: Install dependencies
         run: |
-          brew install libtool meson ninja pkgconf dtc glib gnutls jpeg-turbo libpng libslirp libssh libusb lzo ncurses nettle pixman snappy vde zstd lzfse nettle
+          brew install libtool meson ninja pkgconf dtc glib gnutls jpeg-turbo libpng libslirp libssh libusb lzo ncurses nettle pixman snappy vde zstd lzfse
+
       - name: Build
         run: |
           mkdir build && cd build
-          LIBTOOL="glibtool" ../configure --target-list=aarch64-softmmu,x86_64-softmmu --disable-guest-agent --enable-lzfse --enable-slirp --enable-curses --enable-libssh --enable-virtfs --enable-zstd --extra-cflags=-DNCURSES_WIDECHAR=1 --disable-sdl --disable-gtk --enable-cocoa --enable-lzfse --enable-nettle --enable-gnutls --disable-werror --extra-cflags="-I/opt/homebrew/include" --extra-ldflags="-L/opt/homebrew/lib"
+          LIBTOOL="glibtool" ../configure \
+            --target-list=aarch64-softmmu,x86_64-softmmu \
+            --disable-guest-agent \
+            --enable-lzfse \
+            --enable-slirp \
+            --enable-curses \
+            --enable-libssh \
+            --enable-virtfs \
+            --enable-zstd \
+            --extra-cflags=-DNCURSES_WIDECHAR=1 \
+            --disable-sdl \
+            --disable-gtk \
+            --enable-cocoa \
+            --enable-nettle \
+            --enable-gnutls \
+            --disable-werror \
+            --extra-cflags="-I/opt/homebrew/include" \
+            --extra-ldflags="-L/opt/homebrew/lib"
           make -j$(sysctl -n hw.logicalcpu)
+
+      - name: Upload macOS ARM Artifact (v7)
+        uses: actions/upload-artifact@v7
+        with:
+          name: qemu-v7-macos-arm64
+          path: |
+            build/qemu-system-aarch64
+            build/qemu-system-x86_64
+          retention-days: 30
 
   build_macos_x86_64:
     name: macOS Build (Intel)
@@ -67,11 +114,39 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
+
       - name: Install dependencies
         run: |
-          brew install libtool meson ninja pkgconf dtc glib gnutls jpeg-turbo libpng libslirp libssh libusb lzo ncurses nettle pixman snappy vde zstd lzfse nettle
+          brew install libtool meson ninja pkgconf dtc glib gnutls jpeg-turbo libpng libslirp libssh libusb lzo ncurses nettle pixman snappy vde zstd lzfse
+
       - name: Build
         run: |
           mkdir build && cd build
-          LIBTOOL="glibtool" ../configure --target-list=aarch64-softmmu,x86_64-softmmu --disable-guest-agent --enable-lzfse --enable-slirp --enable-curses --enable-libssh --enable-virtfs --enable-zstd --extra-cflags=-DNCURSES_WIDECHAR=1 --disable-sdl --disable-gtk --enable-cocoa --enable-lzfse --enable-nettle --enable-gnutls --disable-werror --extra-cflags="-I/opt/homebrew/include" --extra-ldflags="-L/opt/homebrew/lib"
+          LIBTOOL="glibtool" ../configure \
+            --target-list=aarch64-softmmu,x86_64-softmmu \
+            --disable-guest-agent \
+            --enable-lzfse \
+            --enable-slirp \
+            --enable-curses \
+            --enable-libssh \
+            --enable-virtfs \
+            --enable-zstd \
+            --extra-cflags=-DNCURSES_WIDECHAR=1 \
+            --disable-sdl \
+            --disable-gtk \
+            --enable-cocoa \
+            --enable-nettle \
+            --enable-gnutls \
+            --disable-werror \
+            --extra-cflags="-I/opt/homebrew/include" \
+            --extra-ldflags="-L/opt/homebrew/lib"
           make -j$(sysctl -n hw.logicalcpu)
+
+      - name: Upload macOS Intel Artifact (v7)
+        uses: actions/upload-artifact@v7
+        with:
+          name: qemu-v7-macos-x86_64
+          path: |
+            build/qemu-system-aarch64
+            build/qemu-system-x86_64
+          retention-days: 30
