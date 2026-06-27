@@ -14,14 +14,9 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
-        run: sudo dnf group install development-tools 
-        with:
-          fetch-depth: 0
-          submodules: true
       - name: Install dependencies
         run: |
-          sudo dnf update
+          sudo dnf group install development-tools 
           sudo dnf install -y \
           gcc gcc-c++ make libtool meson ninja-build pkgconf dtc \
           glib2-devel gnutls-devel libjpeg-turbo-devel libpng-devel \
@@ -29,6 +24,10 @@ jobs:
           pixman-devel snappy-devel zstd libzstd-devel gmp-devel \
           gtk3-devel SDL2-devel lzfse-devel
           pip3 install --user --upgrade meson
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: true
       - name: Build nettle 3.10.2
         run: |
           wget https://ftpmirror.gnu.org/gnu/nettle/nettle-3.10.2.tar.gz
