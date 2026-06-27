@@ -8,7 +8,9 @@ on:
 jobs:
   build_linux:
     name: Linux Build
-    runs-on: fedora-44
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
     permissions:
       contents: read
     steps:
