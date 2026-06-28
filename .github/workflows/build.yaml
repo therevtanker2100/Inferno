@@ -52,7 +52,7 @@ jobs:
       - name: Publish binaries
         uses: actions/upload-artifact@v7
         with:
-          name: linux
+          name: linux-arm64
           path: ${{ github.workspace }}/bin/
 
   build_linux:
@@ -100,7 +100,7 @@ jobs:
       - name: Publish binaries
         uses: actions/upload-artifact@v7
         with:
-          name: linux
+          name: linux-x86_64
           path: ${{ github.workspace }}/bin/
 
   build_macos:
