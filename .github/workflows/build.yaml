@@ -8,7 +8,7 @@ on:
 jobs:
   build_linux_arm:
     name: Linux Build (aarch64)
-    runs-on: ubuntu-latest-arm
+    runs-on: ubuntu-26.04-arm
     container:
       image: fedora:latest
     permissions:
