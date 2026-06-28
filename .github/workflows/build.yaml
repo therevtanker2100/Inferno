@@ -6,8 +6,57 @@ on:
   pull_request:
 
 jobs:
+  build_linux_arm:
+    name: Linux Build (aarch64)
+    runs-on: ubuntu-latest-arm
+    container:
+      image: fedora:latest
+    permissions:
+      contents: read
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo dnf group install -y development-tools 
+          sudo dnf install -y \
+            gcc gcc-c++ make libtool meson ninja-build pkgconf dtc \
+            glib2-devel gnutls-devel libjpeg-turbo-devel libpng-devel \
+            libslirp-devel libssh-devel libusbx-devel lzo-devel ncurses-devel \
+            pixman-devel snappy-devel zstd libzstd-devel gmp-devel \
+            gtk3-devel SDL2-devel python3-pip wget automake autoconf \
+            flex bison libfdt-devel
+          pip3 install --user --upgrade meson
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: true
+      - name: Build nettle 3.10.2
+        run: |
+          wget https://ftpmirror.gnu.org/gnu/nettle/nettle-3.10.2.tar.gz
+          echo "fe9ff51cb1f2abb5e65a6b8c10a92da0ab5ab6eaf26e7fc2b675c45f1fb519b5 nettle-3.10.2.tar.gz" | sha256sum -c - || exit 1
+          tar -xvf nettle-3.10.2.tar.gz
+          cd nettle-3.10.2
+          ./configure
+          make -j$(nproc)
+          sudo make install
+      - name: Build
+        run: |
+          mkdir build
+          cd build
+          export PATH="$HOME/.local/bin:$PATH"
+          PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig ../configure --target-list=aarch64-softmmu,x86_64-softmmu --disable-guest-agent --enable-slirp --enable-lzfse --enable-nettle --enable-gnutls --disable-werror
+          make -j$(nproc)
+      - name: Install
+        run: |
+          cd build
+          make DESTDIR=$GITHUB_WORKSPACE/bin/ install
+      - name: Publish binaries
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux
+          path: ${{ github.workspace }}/bin/
+
   build_linux:
-    name: Linux Build
+    name: Linux Build (x86_64)
     runs-on: ubuntu-latest
     container:
       image: fedora:latest
